@@ -17,7 +17,7 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.122"
         tools:srcCompat="@tools:sample/avatars" />
-
+  
     <Button
         android:id="@+id/button"
         android:layout_width="169dp"
