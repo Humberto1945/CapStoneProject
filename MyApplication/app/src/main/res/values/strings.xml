@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">SeniorSem</string>
+    <string name="loadbutton">Load</string>
+    <string name="segmentbutton">Segment</string>
 </resources>
