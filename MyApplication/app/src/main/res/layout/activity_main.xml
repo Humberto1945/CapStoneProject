@@ -8,35 +8,45 @@
 
     <ImageView
         android:id="@+id/imageView"
-        android:layout_width="322dp"
-        android:layout_height="354dp"
+        android:layout_width="374dp"
+        android:layout_height="218dp"
+        android:layout_marginTop="121dp"
+        android:layout_marginBottom="610dp"
+        android:contentDescription="@string/imageview"
         app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintDimensionRatio="1:1"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.494"
+        app:layout_constraintHorizontal_bias="0.567"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.122"
-        tools:srcCompat="@tools:sample/avatars" />
-  
-    <Button
-        android:id="@+id/button"
-        android:layout_width="169dp"
-        android:layout_height="60dp"
-        android:text="@string/loadbutton"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.128"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/imageView"
-        app:layout_constraintVertical_bias="0.506"
-        android:onClick="loadImage"/>
+        app:layout_constraintVertical_bias="0.201" />
 
     <Button
-        android:id="@+id/button2"
-        android:layout_width="160dp"
+        android:id="@+id/loadButton"
+        android:layout_width="134dp"
         android:layout_height="60dp"
-        android:text="@string/segmentbutton"
-        app:layout_constraintBaseline_toBaselineOf="@+id/button"
+        android:layout_marginStart="39dp"
+        android:layout_marginTop="229dp"
+        android:layout_marginEnd="45dp"
+        android:layout_marginBottom="146dp"
+        android:text="@string/load"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/segmentButton"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/imageView" />
+
+    <Button
+        android:id="@+id/segmentButton"
+        android:layout_width="134dp"
+        android:layout_height="60dp"
+        android:layout_marginStart="45dp"
+        android:layout_marginTop="231dp"
+        android:layout_marginEnd="59dp"
+        android:layout_marginBottom="144dp"
+        android:text="@string/segment"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/button" />
+        app:layout_constraintStart_toEndOf="@+id/loadButton"
+        app:layout_constraintTop_toBottomOf="@+id/imageView" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>
