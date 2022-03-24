@@ -2,4 +2,7 @@
     <string name="app_name">SeniorSem</string>
     <string name="loadbutton">Load</string>
     <string name="segmentbutton">Segment</string>
+    <string name="segment">Segment</string>
+    <string name="load">Load</string>
+    <string name="imageview">imageView</string>
 </resources>

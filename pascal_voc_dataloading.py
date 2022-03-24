@@ -1,6 +1,3 @@
-from ctypes import resize
-from math import ceil
-from pickletools import uint8
 import torch
 import torch.nn as nn
 import torchvision
@@ -13,12 +10,13 @@ from skimage.io import imshow
 import os
 import cv2
 
+
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 #data preparation
 
-#using Pascal VOC Dataset to get filenames and labels
 
+#using Pascal VOC Dataset to get filenames and labels
 
 obj_classes = ['background', 'aeroplane', 'bicycle', 'bird',
                 'boat', 'bottle', 'bus', 'car', 'cat', 'chair',
@@ -37,10 +35,14 @@ train_set_labels = []
 validation_set_samples = []
 test_set_samples = []
 train_set_samples = []
+train_set = []
+validation_set = []
+
 
 #converting segmentation labels
 def _remove_colormap(filename):
     return np.array(Image.open(filename))
+
 
 def loadDatasets(filename, imgarray):
     f = open(filename)
