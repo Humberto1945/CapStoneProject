@@ -1,23 +1,22 @@
-from math import ceil
-import random
 import torch
 import torch.nn as nn
 import torchvision
 from torchvision import datasets, models, transforms
+from torch.utils.data import Dataset, DataLoader
 import matplotlib.pyplot as plt
-import numpy as np
-import os
+import numpy as np                                                                                                   
 from PIL import Image
-import cv2
-import glob
 from skimage.io import imshow
-import tensorflow as tf
+import os
+import cv2
+
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 #data preparation
-#using Pascal VOC Dataset to get fimenames and labels
-dic_path = 'PascalVOC2012/VOC2012/ImageSets/Main'
+
+
+#using Pascal VOC Dataset to get filenames and labels
 
 obj_classes = ['background', 'aeroplane', 'bicycle', 'bird',
                 'boat', 'bottle', 'bus', 'car', 'cat', 'chair',
@@ -25,93 +24,19 @@ obj_classes = ['background', 'aeroplane', 'bicycle', 'bird',
                 'person', 'pottedplant', 'sheep', 'sofa', 'train',
                 'tvmonitor', 'void/unlabelled']
 
+segmentation_path = 'PascalVOC2012/VOC2012/ImageSets/Segmentation'
+
+sclass_path = 'PascalVOC2012/VOC2012/SegmentationClass/'
+jpeg_path = 'PascalVOC2012/VOC2012/JPEGImages/'
+
+validation_set_labels = []
+test_set_labels = []
+train_set_labels = []
+validation_set_samples = []
+test_set_samples = []
+train_set_samples = []
 train_set = []
 validation_set = []
-
-segmentation_path = 'PascalVOC2012/VOC2012/ImageSets/Segmentation'
-sclass_path = 'PascalVOC2012/VOC2012/SegmentationClass'
-
-def make_datasets():
-    files = os.listdir(segmentation_path)
-    for file in files:
-        if ('trainval' not in file):
-            if ('train' in file):
-                f = open(os.path.join(segmentation_path, file))
-                for line in iter(f):
-                    line = line[0:11]
-                    train_set.append(line + ".PNG")
-            else:
-                f = open(os.path.join(segmentation_path, file))
-                for line in iter(f):
-                    line = line[0:11]
-                    validation_set.append(line + ".PNG")
-
-make_datasets()
-#print(train_set)
-#print(validation_set)
-#print(len(validation_set)/2)
-test_set = random.sample(validation_set, ceil(len(validation_set)*.5))
-#print(len(test_set))
-#print(test_set[0])
-val_set = []
-for i in range(len(validation_set)):
-    if (validation_set[i] in test_set):
-        continue
-    val_set.append(validation_set[i])
-
-#The sets are:
-#train_set
-#test_set
-#val_set
-count = 0
-
-
-#print(val_set)
-
-def color_map(N=256, normalized=False):
-    def bitget(byteval, idx):
-        return ((byteval & (1 << idx)) != 0)
-
-    dtype = 'float32' if normalized else 'uint8'
-    rgbmap = np.zeros((N, 3), dtype=dtype)
-    for i in range(N):
-        r = g = b = 0
-        c = i
-        for j in range(8):
-            r = r | (bitget(c, 0) << 7-j)
-            g = g | (bitget(c, 1) << 7-j)
-            b = b | (bitget(c, 2) << 7-j)
-            c = c >> 3
-
-        rgbmap[i] = np.array([r, g, b])
-
-    rgbmap = rgbmap/255 if normalized else rgbmap
-    return rgbmap
-
-
-palette = color_map(N=256)
-ignore = palette[255]
-
-#prints object classes and associated rgb colors
-colors = np.array(palette)
-colors = colors[0:21, :]
-colors = np.append(colors, [ignore], 0)
-
-def class_colors(colors, obj_classes):
-    for i in range(len(obj_classes)-1):
-        print('{:>3d}: {:<20} rgb: {}'.format(i, obj_classes[i], colors[i]))
-    print('{:>3d}: {:<20} rgb: {}'.format(255, obj_classes[len(obj_classes)-1], colors[len(colors)-1]))
-
-class_colors(colors, obj_classes)
-
-
-
-#comparing palette with palette in a SegmentationClass image file
-palette = np.reshape(palette, [-1,])
-image_filepath = os.path.join(sclass_path, train_set[0])
-impalette = Image.open(image_filepath).getpalette()
-res = np.sum(impalette - palette)
-print ("\nSum(impalette - palette) =  {}".format(res))
 
 
 #converting segmentation labels
@@ -119,31 +44,97 @@ def _remove_colormap(filename):
     return np.array(Image.open(filename))
 
 
-for i in range(len(train_set)):
-    #print(train_set[i])
-    train_set[i] = _remove_colormap(os.path.join(sclass_path, train_set[i]))
-    #print(train_set[i])
-    #print("\n")
-for i in range(len(val_set)):
-    validation_set[i] = _remove_colormap(os.path.join(sclass_path, val_set[i]))
+def loadDatasets(filename, imgarray):
+    f = open(filename)
+    for line in iter(f):
+        line = line[0:15]
+        imgarray.append(line)
 
-for i in range(len(test_set)):
-    test_set[i] = _remove_colormap(os.path.join(sclass_path, test_set[i]))
+loadDatasets('labels/train_set.txt', train_set_labels)
+loadDatasets('labels/test_set.txt', test_set_labels)
+loadDatasets('labels/validation_set.txt', validation_set_labels)
+loadDatasets('samples/train_set.txt', train_set_samples)
+loadDatasets('samples/test_set.txt', test_set_samples)
+loadDatasets('samples/validation_set.txt', validation_set_samples)
+
+print(train_set_labels[2])
+print(train_set_samples[2])
+
+# for i in range(len(train_set_samples)):
+#     train_set_samples[i] = _remove_colormap(train_set_samples[i])
+#     train_set_labels[i] = _remove_colormap(train_set_)
+
+learning_rate = 0.01
+num_epochs = 5
+batch_size = 20
+
+class PascalVOCDataset(Dataset):
+    def __init__(self, datalist_sample, datalist_label, transform):
+        self.datalist_sample = datalist_sample
+        self.datalist_label = datalist_label
+        self.transform = transform
+
+    def __len__(self):
+        return len(self.datalist_sample)
+
+    def __getitem__(self, index):
+        sample = self.datalist_sample[index]
+        sample = _remove_colormap(os.path.join(jpeg_path,sample))
+        #sample = Image.fromarray(np.uint8(sample))
+        #sample = resize(224, 224)
+        # sample = cv2.imread(os.path.join(jpeg_path, sample))
+        # sample = cv2.cvtColor(label, cv2.COLOR_BGR2RGB)
+
+        label = self.datalist_label[index]
+        label = _remove_colormap(os.path.join(sclass_path, label))
+        #label = Image.fromarray(np.uint8(label))
+        #label = resize(224, 224)
+        # label = cv2.imread(os.path.join(sclass_path, label))
+        # label = cv2.cvtColor(label, cv2.COLOR_BGR2RGB)
+        
+        return sample, label
+    
+train_transform = transforms.Compose([
+    #transforms.Resize(300, interpolation=2)
+    transforms.ToPILImage(),
+    transforms.Resize((300, 300), transforms.InterpolationMode.BILINEAR),
+    transforms.ToTensor()
+])
+
+test_transform = transforms.Compose([
+    transforms.Resize((300, 300), transforms.InterpolationMode.BILINEAR),
+    transforms.ToTensor()
+])
+
+train_dataset = PascalVOCDataset(train_set_samples, train_set_labels, transform=train_transform)
+print(train_dataset[5])
+train_loader = torch.utils.data.DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=True)
+
+examples = iter(train_loader)
+samples, labels = examples.next()
+print(samples.shape, labels.shape)
+
+# for sample, label in train_loader:
+#     print(sample.shape)
+
+# val_dataset = PascalVOCDataset(validation_set_samples, validation_set_labels, test_transform)
+# test_dataset = PascalVOCDataset(test_set_samples, test_set_labels, test_transform)
+       
+
+
+# #model training
 
 
 
-mean = np.array([0.485, 0.456, 0.406])
-std = np.array([0.229, 0.224, 0.225])
-
-data_transforms = {
-    'SegmentationClass' : transforms.Compose([
-        transforms.RandomResizedCrop(224),
-        transforms.RandomHorizontalFlip(),
-        transforms.ToTensor(),
-        transforms.Normalize(mean, std)]),
-}
 
 
-#model training
-model = models.resnet50(pretrained=False)
+# for i in range(len(train_set_samples)):
+#     height, width = train_set_samples[i].shape
+#     num_pixels = height * width
+    #print(height, width)
+    #print(num_pixels)
+
+
+
+#model = models.resnet50(pretrained=False)
 
