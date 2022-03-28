@@ -15,6 +15,8 @@ import android.widget.Button;
 import android.widget.ImageView;
 
 import org.pytorch.Module;
+import org.pytorch.Tensor;
+import org.pytorch.torchvision.TensorImageUtils;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -44,6 +46,39 @@ public class MainActivity extends AppCompatActivity {
                 startActivityForResult(intent, 50);
             }
         });
+        // Action of clicking the segment button
+        segmentImage.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View view){
+                final Tensor inputTensor = TensorImageUtils.bitmapToFloat32Tensor(imageBitmap,
+                        TensorImageUtils.TORCHVISION_NORM_MEAN_RGB,
+                        TensorImageUtils.TORCHVISION_NORM_STD_RGB);
+                // Getting the input values
+                final float[] inputs = inputTensor.getDataAsFloatArray();
+                // TODO extract data from the inputs based on the model
+                int width = imageBitmap.getWidth();
+                int height = imageBitmap.getHeight();
+
+
+                int[] intValues = new int[width * height];
+                // for loop to go through outputted size
+
+                for(int i = 0; i< width; i++){
+                    for(int j = 0; j< height; j++ ){
+
+                    }
+                }
+                // Displaying the segmented images
+                ImageView imageView = findViewById(R.id.imageView);
+                Bitmap segmentedBitMap = Bitmap.createScaledBitmap(imageBitmap, width, height, true);
+                // Copying the segmented bit map into an output to translate into pixels
+                Bitmap outputBitmap = segmentedBitMap.copy(segmentedBitMap.getConfig(), true);
+                outputBitmap.setPixels(intValues, 0, outputBitmap.getWidth(), 0, 0, outputBitmap.getWidth(), outputBitmap.getHeight());
+                imageView.setImageBitmap(outputBitmap);
+
+            }
+        });
+
     }
 
     public void loadImage(View view){
