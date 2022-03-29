@@ -9,12 +9,13 @@ import matplotlib.pyplot as plt
 #doesn't work right now because images need to be normalized
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-resnet50 = models.resnet50(pretrained=False)
-resnet101 = models.resnet101(pretrained=False)
+resnet101 = models.segmentation.fcn_resnet101(pretrained=False, progress=True, num_classes=22).to(device)
+#resnet50 = models.segmentation.deeplabv3_resnet50(pretrained=False)
 
 learning_rate = 0.01
 num_epochs = 5
-image_size = 300
+image_size = 224
+batch_size = 5
 
 train_loader, test_loader = PV.getDatasets()
 
@@ -22,10 +23,6 @@ examples = iter(train_loader)
 samples, labels = examples.next()
 print(samples.shape, labels.shape)
 
-# plt.hist(samples[0].ravel(), bins=50, density=True)
-# plt.xlabel("pixel values")
-# plt.ylabel("relative frequency")
-# plt.title("distribution of pixels")
 
 def train_model(model, learning_rate, num_epochs):
 
@@ -38,9 +35,12 @@ def train_model(model, learning_rate, num_epochs):
         for i, (samples, labels) in enumerate(train_loader):
             samples = samples.to(device)
             labels = labels.to(device)
+            samples = samples.type(torch.FloatTensor)
+            labels = labels.type(torch.LongTensor)
 
             #forward
-            outputs = model(samples)
+            outputs = model(samples)['out']
+            #labels = torch.empty(batch_size, dtype=torch.long).random_(5)
             loss = criterion(outputs, labels)
 
             #backwards
@@ -53,7 +53,7 @@ def train_model(model, learning_rate, num_epochs):
 
     print('Training Complete')
 
-train_model(resnet50, learning_rate, num_epochs)
 train_model(resnet101, learning_rate, num_epochs)
+#train_model(resnet50, learning_rate, num_epochs)
 
 
