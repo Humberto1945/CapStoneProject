@@ -45,7 +45,7 @@ loadDatasets('samples/train_set.txt', train_set_samples)
 loadDatasets('samples/test_set.txt', test_set_samples)
 loadDatasets('samples/validation_set.txt', validation_set_samples)
 
-batch_size = 5
+batch_size = 2
 image_size = 224
 
 
@@ -66,19 +66,17 @@ class PascalVOCDataset(Dataset):
         mean = torch.mean(sample)
         std = torch.std(sample)
         sample = (sample-mean)/std
+        sample = sample.type(torch.FloatTensor)
         # norm = transforms.Normalize(mean, std)
         # norm(sample)
         
-        #sample = sample.permute(2, 0, 1)
+        sample = sample.permute(2, 0, 1)
         
         label = self.datalist_label[index]
         label = _remove_colormap(os.path.join(sclass_path, label))
         label = cv2.resize(label, dsize=(image_size, image_size), interpolation=cv2.INTER_CUBIC)
         label = torch.tensor(label, dtype=torch.float32)
-        # mean = torch.mean(label)
-        # std = torch.std(label)
-        # label = (label-mean)/std
-        label[label==255] = len(obj_classes)
+        label[label>20] = 21
 
         sample = sample, label
 
@@ -102,17 +100,7 @@ def getDatasets():
     #datasets
     train_dataset = PascalVOCDataset(train_set_samples, train_set_labels, train_transform)
     test_dataset = PascalVOCDataset(test_set_samples, test_set_labels, test_transform)
-    sample, label = train_dataset[5]
-    print(label)
-    #sample.transpose_(0, 2)
-    fig = plt.figure()  
-    a = fig.add_subplot(1,2,1)
-    plt.imshow(sample)
-
-    a = fig.add_subplot(1,2,2)
-    plt.imshow(label)
-
-    plt.show()
+    
     #dataloaders
     train_loader = DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=True)
     test_loader = DataLoader(dataset=test_dataset, batch_size=batch_size, shuffle=False)
