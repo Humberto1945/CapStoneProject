@@ -27,6 +27,29 @@ public class MainActivity extends AppCompatActivity {
     Bitmap imageBitmap;
     // Module moduleResNet;
     int imageSize = 224;
+    // class segmentation corresponding indices
+    int background = 0;
+    int unlabelled = 225;
+    int aeroplane = 1;
+    int bicycle = 2;
+    int bird = 3;
+    int boat = 5;
+    int bus = 6;
+    int car =7;
+    int cat = 8;
+    int chair = 9;
+    int cow = 10;
+    int diningtable =11;
+    int dog = 12;
+    int horse = 13;
+    int mortorbike =14;
+    int person = 15;
+    int pottedPlant = 16;
+    int sheep = 17;
+    int sofa = 18;
+    int train = 19;
+    int monitor = 20;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,6 +58,7 @@ public class MainActivity extends AppCompatActivity {
         // Setting buttons
         Button loadImage = findViewById(R.id.loadButton);
         Button segmentImage = findViewById(R.id.segmentButton);
+
 
 
         // Lets the user select an image from their camera roll
