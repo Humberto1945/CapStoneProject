@@ -31,7 +31,7 @@ public class MainActivity extends AppCompatActivity {
     // Module moduleResNet;
     int imageSize = 224;
     // class segmentation corresponding indices
-    int background = 0;
+    // int background = 0;
     int unlabelled = 225;
     int aeroplane = 1;
     int bicycle = 2;
