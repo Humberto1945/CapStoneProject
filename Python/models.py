@@ -37,9 +37,6 @@ validation_set_samples = []
 train_set_labels = []
 train_set_samples = []
 
-#converting samples and labels to numpy array
-def _remove_colormap(filename):
-    return np.array(Image.open(filename))
 
 #using text files to load filenames into lists
 def loadDatasets(filename, imgarray):
@@ -56,12 +53,12 @@ loadDatasets('/content/drive/MyDrive/Python/samples/validation_set.txt', validat
 batch_size = 10
 image_size = 300
 
-
 class PascalVOCDataset(Dataset):
-    def __init__(self, datalist_sample, datalist_label, transform):
+    def __init__(self, datalist_sample, datalist_label, transform, target_transform):
         self.datalist_sample = datalist_sample
         self.datalist_label = datalist_label
         self.transform = transform
+        self.target_transform = target_transform
         
     def __len__(self):
         return len(self.datalist_sample)
@@ -69,40 +66,49 @@ class PascalVOCDataset(Dataset):
 
     def __getitem__(self, index):
         sample = self.datalist_sample[index]
-        sample = _remove_colormap(os.path.join(jpeg_path,sample))/255.0
-        sample = cv2.resize(sample, dsize=(image_size, image_size), interpolation=cv2.INTER_CUBIC)
-        sample = torch.tensor(sample, dtype=torch.float32)
-        mean = torch.mean(sample)
-        std = torch.std(sample)
-        sample = (sample-mean)/std
-        sample = sample.type(torch.FloatTensor)
+        sample = np.array(Image.open(os.path.join(jpeg_path,sample)))
+        #sample = cv2.resize(sample, dsize=(image_size, image_size), interpolation=cv2.INTER_CUBIC)
+        # sample = torch.tensor(sample, dtype=torch.float32)
+        # sample = sample.type(torch.FloatTensor)
+        # mean = torch.mean(sample)
+        # std = torch.std(sample)
+        # sample = (sample-mean)/std
         # norm = transforms.Normalize(mean, std)
         # norm(sample)
-        
-        sample = sample.permute(2, 0, 1)
+        sample = self.transform(sample)
         
         label = self.datalist_label[index]
-        label = _remove_colormap(os.path.join(sclass_path, label))
-        label = cv2.resize(label, dsize=(image_size, image_size), interpolation=cv2.INTER_CUBIC)
-        label = torch.tensor(label, dtype=torch.float32)
+        label = np.array(Image.open(os.path.join(sclass_path, label)))
+        #label = cv2.resize(label, dsize=(image_size, image_size), interpolation=cv2.INTER_CUBIC)
         label[label > 20] = 21
+        label = self.target_transform(label)
+        label = torch.squeeze(label)
+        
 
-        sample = sample, label
+        return sample, label
 
-        return sample
+        
 
 #transforms for training and testing set
 train_transform = transforms.Compose([
-    transforms.CenterCrop(image_size),
-    transforms.ToTensor(),
-    #transforms.Resize(size=(image_size), interpolation=transforms.InterpolationMode.BILINEAR),
-    #transforms.Normalize()
+                                      transforms.ToPILImage(),
+                                      transforms.CenterCrop(image_size),
+                                      transforms.ToTensor(),
+
+                                      #these are just placeholder values for testing
+                                      transforms.Normalize([0.411, 0.412, 0.412], [0.187, 0.189, 0.190])
+])
+
+target_transform = transforms.Compose([
+                                       transforms.ToPILImage(),
+                                       transforms.CenterCrop(image_size),
+                                       transforms.ToTensor()                              
 ])
 
 
 def getDatasets():
     #datasets
-    train_dataset = PascalVOCDataset(train_set_samples, train_set_labels, train_transform)
+    train_dataset = PascalVOCDataset(train_set_samples, train_set_labels, train_transform, target_transform)
     
     #dataloaders
     train_loader = DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=True)
@@ -110,6 +116,9 @@ def getDatasets():
 
 train_loader = getDatasets()
 
+examples = iter(train_loader)
+samples, labels = examples.next()
+print(samples.shape, labels.shape)
 
 # #model training
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -118,7 +127,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 resnet50fcn = models.segmentation.fcn_resnet50(pretrained=False, progress=True, num_classes=22).to(device)
 #resnet50deeplab = models.segmentation.deeplabv3_resnet50(pretrained=False, progress=True, num_classes=22).to(device)
 
-learning_rate = 0.1
+learning_rate = 0.001
 num_epochs = 200
 
 def train_model(model, learning_rate, num_epochs):
@@ -168,12 +177,12 @@ def train_model(model, learning_rate, num_epochs):
     #prints when training is complete and saves the model to specified path
     time_elapsed = time.time() - since 
     print('Training completed in {:.0f}m {:.0f}s'.format(time_elapsed // 60, time_elapsed % 60))
-    PATH = './resnet50_large_lr.pth'
+    PATH = './resnet50_good_lr.pth'
     torch.save(resnet50fcn.state_dict(), PATH)
     
     #plots the graph using average loss per epoch using matplotlib
     plt.plot(epochs, train_losses, "g", label="Training Loss")
-    plt.title("Loss VS Epoch Large Learning Rate = 0.1")
+    plt.title(f'Loss VS Epoch Large Learning Rate = {learning_rate}')
     plt.xlabel("epoch")
     plt.ylabel("loss")
     plt.legend()
