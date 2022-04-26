@@ -34,8 +34,6 @@ jpeg_path = '/content/drive/MyDrive/Python/PascalVOC2012/VOC2012/JPEGImages/'
 test_set_labels = []
 test_set_samples = []
 
-
-
 #converting samples and labels to numpy array
 def _remove_colormap(filename):
     return np.array(Image.open(filename))
@@ -52,14 +50,15 @@ loadDatasets('/content/drive/MyDrive/Python/labels/test_set.txt', test_set_label
 loadDatasets('/content/drive/MyDrive/Python/samples/test_set.txt', test_set_samples)
 
 batch_size = 10
-image_size = 300
+image_size = 512
 
 
 class PascalVOCDataset(Dataset):
-    def __init__(self, datalist_sample, datalist_label, transform):
+    def __init__(self, datalist_sample, datalist_label, transform, target_transform):
         self.datalist_sample = datalist_sample
         self.datalist_label = datalist_label
         self.transform = transform
+        self.target_transform = target_transform
         
     def __len__(self):
         return len(self.datalist_sample)
@@ -67,50 +66,46 @@ class PascalVOCDataset(Dataset):
 
     def __getitem__(self, index):
         sample = self.datalist_sample[index]
-        sample = _remove_colormap(os.path.join(jpeg_path,sample))/255.0
-        sample = cv2.resize(sample, dsize=(image_size, image_size), interpolation=cv2.INTER_CUBIC)
-        sample = torch.tensor(sample, dtype=torch.float32)
-        mean = torch.mean(sample)
-        std = torch.std(sample)
-        sample = (sample-mean)/std
-        sample = sample.type(torch.FloatTensor)
-        
-        sample = sample.permute(2, 0, 1)
+        sample = np.array(Image.open(os.path.join(jpeg_path,sample)))
+        sample = self.transform(sample)
         
         label = self.datalist_label[index]
-        label = _remove_colormap(os.path.join(sclass_path, label))
-        label = cv2.resize(label, dsize=(image_size, image_size), interpolation=cv2.INTER_CUBIC)
-        label = torch.tensor(label, dtype=torch.float32)
-        label = label.type(torch.LongTensor)
+        label = np.array(Image.open(os.path.join(sclass_path, label)))
         label[label > 20] = 21
+        label = torch.tensor(label, dtype=torch.uint8)
+        label = self.target_transform(label)
+        label = torch.squeeze(label)
 
-        sample = sample, label
+        return sample, label
+
         
 
-        return sample
-
-
-#transforms for testing set
+#transforms for training and testing set
 test_transform = transforms.Compose([
-    transforms.CenterCrop(image_size),
-    transforms.Resize(size=(image_size), interpolation=transforms.InterpolationMode.BILINEAR),
-    transforms.ToTensor()
+                                      transforms.ToPILImage(),
+                                      transforms.CenterCrop(image_size),
+                                      transforms.ToTensor(),
+                                      transforms.Normalize([0.411, 0.412, 0.412], [0.187, 0.189, 0.190])
+])
+
+target_transform = transforms.Compose([
+                                       transforms.CenterCrop(image_size)                                                
 ])
 
 def getDatasets():
     #dataset
-    test_dataset = PascalVOCDataset(test_set_samples, test_set_labels, test_transform)
+    test_dataset = PascalVOCDataset(test_set_samples, test_set_labels, test_transform, target_transform)
+    
     #dataloader
     test_loader = DataLoader(dataset=test_dataset, batch_size=batch_size, shuffle=False)
     return test_loader
 
 test_loader = getDatasets()
 
-
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-FILE = "/content/drive/MyDrive/Python/models/resnet50_good_lr.pth"
-resnet50fcn = models.segmentation.fcn_resnet50(num_classes=len(obj_classes)).to(device)
+FILE = "/content/drive/MyDrive/Python/models/resnet50deeplab_ver_1_1.pth"
+resnet50fcn = models.segmentation.deeplabv3_resnet50(num_classes=len(obj_classes)-1).to(device)
 resnet50fcn.load_state_dict(torch.load(FILE))
 resnet50fcn.eval().to(device)
 
@@ -133,35 +128,44 @@ def test_accuracy(model):
 
             outputs = model(samples)['out']
 
-            _, predictions = torch.max(outputs, 1)
+            predictions = torch.argmax(outputs, 1)
+           
 
             jaccard = JaccardIndex(num_classes=22, ignore_index=21, reduction='none').to(device)
             IoU = jaccard(predictions, labels).cpu()
             IoUs.append(np.array(IoU))
+            # print(IoU)
+     
 
-            #accuracy using number of correct pixels
-            for i in range(5):
-                for j in range(image_size):
-                    for k in range(image_size):
-                        label = labels[i][j][k].item()
-                        pred = predictions[i][j][k].item()
-                        if (label == pred):
-                            n_class_correct[int(label)] += 1
-                        n_class_samples[int(label)] += 1
+        #   accuracy using number of correct pixels
+        # #     for i in range(5):
+        # #         for j in range(image_size-1):
+        # #             for k in range(image_size-1):
+        # #                 label = labels[i][j][k].item()
+        # #                 # print(label)
+        # #                 pred = predictions[i][j][k].item()
+        # #                 print(int(label))
+        # #                 n_class_samples[int(label)] += 1
+        # #                 if (label == pred):
+        # #                     n_class_correct[int(label)] += 1
+        # #                     # print(n_class_correct[int(label)])
+                        
 
-        for i in range(21):
-            acc = 100.0 * n_class_correct[i] / n_class_samples[i]
-            print(f'Accuracy of {obj_classes[i]}: {acc:.4f}%')
-            num_correct += n_class_correct[i]
-            num_samples += n_class_samples[i]
+        # for i in range(21):
+        #     print(n_class_correct[i])
+        #     acc = 100.0 * (n_class_correct[i] / n_class_samples[i])
+        #     print(f'Accuracy of {obj_classes[i]}: {acc:.4f}%')
+        #     num_correct += n_class_correct[i]
+        #     num_samples += n_class_samples[i]
 
-        acc = 100.0 * num_correct / num_samples
-        print(f'accuracy of network = {acc:.4f}')
+        # acc = 100.0 * num_correct / num_samples
+        # print(f'accuracy of network = {acc:.4f}')
 
 
-        #accuracy using IoU
-        IoU_class_mean = [0 for i in range(len(obj_classes)) ]
+        # accuracy using IoU
+        IoU_class_mean = [0 for i in range(len(obj_classes))]
         IoUs = np.array(IoUs)
+       
 
         for i in range(len(IoUs)):
             for j in range(len(obj_classes)-1):
