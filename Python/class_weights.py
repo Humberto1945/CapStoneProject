@@ -6,16 +6,14 @@ from PIL import Image
 import os
 import torch
 
+#using Pascal VOC Dataset to get filenames and labels
 obj_classes = ['background', 'aeroplane', 'bicycle', 'bird',
                 'boat', 'bottle', 'bus', 'car', 'cat', 'chair',
                 'cow', 'diningtable', 'dog', 'horse', 'motorbike',
                 'person', 'pottedplant', 'sheep', 'sofa', 'train',
                 'tvmonitor', 'void/unlabelled']
-
-#using Pascal VOC Dataset to get filenames and labels
-
+                
 sclass_path = '/content/drive/MyDrive/Python/PascalVOC2012/VOC2012/SegmentationClass/'
-jpeg_path = '/content/drive/MyDrive/Python/PascalVOC2012/VOC2012/JPEGImages/'
 
 image_size = 300
 train_set_labels = []
@@ -35,7 +33,6 @@ for i in range(len(train_set_labels)):
     centercrop = transforms.CenterCrop(image_size)
     train_set_labels[i] = centercrop(train_set_labels[i])
 
-
 class_frequency = [0 for i in range(len(obj_classes)-1)]
 total_pixels = 0
 
@@ -52,7 +49,6 @@ for i in range(len(class_frequency)):
 
 class_frequency = torch.tensor(class_frequency, dtype=torch.float32)
 median = torch.median(class_frequency)
-print(median)
 
 for i in range(len(class_frequency)):
     class_frequency[i] = median / class_frequency[i]
