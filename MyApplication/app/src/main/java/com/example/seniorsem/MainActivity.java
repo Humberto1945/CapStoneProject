@@ -1,7 +1,6 @@
 package com.example.seniorsem;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import android.Manifest;
+
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -29,7 +28,7 @@ public class MainActivity extends AppCompatActivity {
     Bitmap imageBitmap;
     Module preTrainedModel;
     // Module moduleResNet;
-    int imageSize = 224;
+    // int imageSize = 224;
     // class segmentation corresponding indices
     // int background = 0;
     int unlabelled = 225;
@@ -65,10 +64,13 @@ public class MainActivity extends AppCompatActivity {
         Button segmentImage = findViewById(R.id.segmentButton);
         // Import the pretrained-model
         try {
-            preTrainedModel= Module.load(readingFilePath(this,"test_model.ptl"));
+            preTrainedModel= Module.load(readingFilePath(this,"model.pth"));
+
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        // preTrainedModel= LiteModuleLoader.load("C:/Users/titig/AprilPush/CapStoneProject/MyApplication/app/src/main/assets/test_model.ptl");
 
         // Lets the user select an image from their camera roll
         loadImage.setOnClickListener(new View.OnClickListener() {
@@ -86,7 +88,7 @@ public class MainActivity extends AppCompatActivity {
                 //getting the inputs from the image
                 final Tensor inputTensor = TensorImageUtils.bitmapToFloat32Tensor(imageBitmap,
                         TensorImageUtils.TORCHVISION_NORM_MEAN_RGB, TensorImageUtils.TORCHVISION_NORM_STD_RGB);
-                final float[] inputs = inputTensor.getDataAsFloatArray();
+                // final float[] inputs = inputTensor.getDataAsFloatArray();
                 //setting the values to a map to get the class num
                 Map<String, IValue> outTensors = preTrainedModel.forward(IValue.from(inputTensor)).toDictStringKey();
                 // VOC key word out to tensor
@@ -150,12 +152,10 @@ public class MainActivity extends AppCompatActivity {
                             intValues[maxj * width + maxk] = Color.rgb(128,192,0);
                         else if (maxi ==tvmonitor )
                             intValues[maxj * width + maxk] = Color.rgb(0,64,128);
-                        else if (maxi ==tvmonitor )
-                            intValues[maxj * width + maxk] = Color.rgb(0,64,128);
                         else if (maxi ==unlabelled )
                             intValues[maxj * width + maxk] = Color.rgb(224,224,192);
                         else
-                            intValues[maxj * width + maxk] = Color.rgb(0,0,0);;
+                            intValues[maxj * width + maxk] = Color.rgb(0,0,0);
                     }
                 }
 
@@ -172,18 +172,14 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    public void loadImage(View view){
-        int STORAGE_PERMISSION_CODE = 23;
-        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, STORAGE_PERMISSION_CODE);
-        Intent intent = new Intent (Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-        startActivityForResult(intent, 0);
-    }
-
     protected void onActivityResult(int requestCode, int resultCode, Intent data){
         super.onActivityResult(requestCode, resultCode, data);
-        ImageView imageView = findViewById(R.id.imageView);
-        selectedImage = data.getData();
-        imageView.setImageURI(selectedImage);
+        //ImageView imageView = findViewById(R.id.imageView);
+        if (resultCode == RESULT_OK && data != null) {
+            selectedImage = data.getData();
+            ImageView imageView = findViewById(R.id.imageView);
+            imageView.setImageURI(selectedImage);
+        }
         try {
             //Getting the bitmap image
             imageBitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(),selectedImage);
