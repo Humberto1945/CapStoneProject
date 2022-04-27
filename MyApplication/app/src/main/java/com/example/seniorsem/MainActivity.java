@@ -1,6 +1,9 @@
 package com.example.seniorsem;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -8,7 +11,6 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
-import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import org.pytorch.IValue;
@@ -21,6 +23,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Map;
+import java.util.Objects;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -64,7 +67,7 @@ public class MainActivity extends AppCompatActivity {
         Button segmentImage = findViewById(R.id.segmentButton);
         // Import the pretrained-model
         try {
-            preTrainedModel= Module.load(readingFilePath(this,"model.pth"));
+            preTrainedModel= Module.load(readingFilePath(this,"model3.pth"));
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -73,101 +76,97 @@ public class MainActivity extends AppCompatActivity {
         // preTrainedModel= LiteModuleLoader.load("C:/Users/titig/AprilPush/CapStoneProject/MyApplication/app/src/main/assets/test_model.ptl");
 
         // Lets the user select an image from their camera roll
-        loadImage.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                // Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-                Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-                startActivityForResult(intent, 50);
-            }
+        loadImage.setOnClickListener(view -> {
+            // Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+            Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+            startActivityForResult(intent, 50);
+
         });
         // Action of clicking the segment button
-        segmentImage.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View view){
-                //getting the inputs from the image
-                final Tensor inputTensor = TensorImageUtils.bitmapToFloat32Tensor(imageBitmap,
-                        TensorImageUtils.TORCHVISION_NORM_MEAN_RGB, TensorImageUtils.TORCHVISION_NORM_STD_RGB);
-                // final float[] inputs = inputTensor.getDataAsFloatArray();
-                //setting the values to a map to get the class num
-                Map<String, IValue> outTensors = preTrainedModel.forward(IValue.from(inputTensor)).toDictStringKey();
-                // VOC key word out to tensor
-                final Tensor outputTensor = outTensors.get("out").toTensor();
-                final float[] scores = outputTensor.getDataAsFloatArray();
+        segmentImage.setOnClickListener(view -> {
+            //getting the inputs from the image
+            final Tensor inputTensor = TensorImageUtils.bitmapToFloat32Tensor(imageBitmap,
+                    TensorImageUtils.TORCHVISION_NORM_MEAN_RGB, TensorImageUtils.TORCHVISION_NORM_STD_RGB);
+            // final float[] inputs = inputTensor.getDataAsFloatArray();
+            //setting the values to a map to get the class num
+            Map<String, IValue> outTensors = preTrainedModel.forward(IValue.from(inputTensor)).toDictStringKey();
+            // VOC key word out to tensor
+            //final Tensor outputTensor = outTensors.get("out").toTensor();
+            final Tensor outputTensor = Objects.requireNonNull(outTensors.get("out")).toTensor();
+            final float[] scores = outputTensor.getDataAsFloatArray();
 
-                int width = imageBitmap.getWidth();
-                int height = imageBitmap.getHeight();
+            int width = imageBitmap.getWidth();
+            int height = imageBitmap.getHeight();
 
-                int[] intValues = new int[width * height];
-                //looping through to get the class
-                for (int j = 0; j < height; j++) {
-                    for (int k = 0; k < width; k++) {
-                        int maxi = 0, maxj = 0, maxk = 0;
-                        double maxnum = -Double.MAX_VALUE;
+            int[] intValues = new int[width * height];
+            //looping through to get the class
+            for (int j = 0; j < height; j++) {
+                for (int k = 0; k < width; k++) {
+                    int maxi = 0, maxj = 0, maxk = 0;
+                    double maxnum = -Double.MAX_VALUE;
 
-                        for (int i = 0; i < CLASSNUM; i++) {
-                            float score = scores[i * (width * height) + j * width + k];
-                            if (score > maxnum) {
-                                maxnum = score;
-                                maxi = i; maxj = j; maxk = k;
-                            }
+                    for (int i = 0; i < CLASSNUM; i++) {
+                        float score = scores[i * (width * height) + j * width + k];
+                        if (score > maxnum) {
+                            maxnum = score;
+                            maxi = i; maxj = j; maxk = k;
                         }
-                        if (maxi == aeroplane)
-                            intValues[maxj * width + maxk] = Color.rgb(128,0,0);
-                        else if (maxi == bicycle)
-                            intValues[maxj * width + maxk] = Color.rgb(0,128,0);
-                        else if (maxi == bird)
-                            intValues[maxj * width + maxk] = Color.rgb(128,128,0);
-                        else if (maxi == boat)
-                            intValues[maxj * width + maxk] = Color.rgb(0,0,128);
-                        else if (maxi == bottle)
-                            intValues[maxj * width + maxk] = Color.rgb(128,0,128);
-                        else if (maxi == bus)
-                            intValues[maxj * width + maxk] = Color.rgb(0,128,128);
-                        else if (maxi == car)
-                            intValues[maxj * width + maxk] = Color.rgb(128,128,128);
-                        else if (maxi == cat)
-                            intValues[maxj * width + maxk] = Color.rgb(64,0,0);
-                        else if (maxi == chair)
-                            intValues[maxj * width + maxk] = Color.rgb(192,0,0);
-                        else if (maxi == cow)
-                            intValues[maxj * width + maxk] = Color.rgb(64,128,0);
-                        else if (maxi == diningtable)
-                            intValues[maxj * width + maxk] = Color.rgb(192,128,0);
-                        else if (maxi == dog)
-                            intValues[maxj * width + maxk] = Color.rgb(64,0,128);
-                        else if (maxi == horse)
-                            intValues[maxj * width + maxk] = Color.rgb(192,0,128);
-                        else if (maxi == mortorbike)
-                            intValues[maxj * width + maxk] = Color.rgb(64,128,128);
-                        else if (maxi == person)
-                            intValues[maxj * width + maxk] = Color.rgb(192,128,128);
-                        else if (maxi == pottedPlant)
-                            intValues[maxj * width + maxk] = Color.rgb(0,64,0);
-                        else if (maxi == sheep)
-                            intValues[maxj * width + maxk] = Color.rgb(128,64,0);
-                        else if (maxi == sofa)
-                            intValues[maxj * width + maxk] = Color.rgb(0,192,0);
-                        else if (maxi == train)
-                            intValues[maxj * width + maxk] = Color.rgb(128,192,0);
-                        else if (maxi ==tvmonitor )
-                            intValues[maxj * width + maxk] = Color.rgb(0,64,128);
-                        else if (maxi ==unlabelled )
-                            intValues[maxj * width + maxk] = Color.rgb(224,224,192);
-                        else
-                            intValues[maxj * width + maxk] = Color.rgb(0,0,0);
                     }
+                    if (maxi == aeroplane)
+                        intValues[maxj * width + maxk] = Color.rgb(128,0,0);
+                    else if (maxi == bicycle)
+                        intValues[maxj * width + maxk] = Color.rgb(0,128,0);
+                    else if (maxi == bird)
+                        intValues[maxj * width + maxk] = Color.rgb(128,128,0);
+                    else if (maxi == boat)
+                        intValues[maxj * width + maxk] = Color.rgb(0,0,128);
+                    else if (maxi == bottle)
+                        intValues[maxj * width + maxk] = Color.rgb(128,0,128);
+                    else if (maxi == bus)
+                        intValues[maxj * width + maxk] = Color.rgb(0,128,128);
+                    else if (maxi == car)
+                        intValues[maxj * width + maxk] = Color.rgb(128,128,128);
+                    else if (maxi == cat)
+                        intValues[maxj * width + maxk] = Color.rgb(64,0,0);
+                    else if (maxi == chair)
+                        intValues[maxj * width + maxk] = Color.rgb(192,0,0);
+                    else if (maxi == cow)
+                        intValues[maxj * width + maxk] = Color.rgb(64,128,0);
+                    else if (maxi == diningtable)
+                        intValues[maxj * width + maxk] = Color.rgb(192,128,0);
+                    else if (maxi == dog)
+                        intValues[maxj * width + maxk] = Color.rgb(64,0,128);
+                    else if (maxi == horse)
+                        intValues[maxj * width + maxk] = Color.rgb(192,0,128);
+                    else if (maxi == mortorbike)
+                        intValues[maxj * width + maxk] = Color.rgb(64,128,128);
+                    else if (maxi == person)
+                        intValues[maxj * width + maxk] = Color.rgb(192,128,128);
+                    else if (maxi == pottedPlant)
+                        intValues[maxj * width + maxk] = Color.rgb(0,64,0);
+                    else if (maxi == sheep)
+                        intValues[maxj * width + maxk] = Color.rgb(128,64,0);
+                    else if (maxi == sofa)
+                        intValues[maxj * width + maxk] = Color.rgb(0,192,0);
+                    else if (maxi == train)
+                        intValues[maxj * width + maxk] = Color.rgb(128,192,0);
+                    else if (maxi ==tvmonitor )
+                        intValues[maxj * width + maxk] = Color.rgb(0,64,128);
+                    else if (maxi ==unlabelled )
+                        intValues[maxj * width + maxk] = Color.rgb(224,224,192);
+                    else
+                        intValues[maxj * width + maxk] = Color.rgb(0,0,0);
                 }
-
-                //rescaling the image for better input
-                Bitmap bitmapScaled = Bitmap.createScaledBitmap(imageBitmap, width, height, true);
-
-                Bitmap outputBitmap = bitmapScaled.copy(bitmapScaled.getConfig(), true);
-                outputBitmap.setPixels(intValues, 0, outputBitmap.getWidth(), 0, 0, outputBitmap.getWidth(), outputBitmap.getHeight());
-                //sets the segmented image to the imageview
-                ImageView imageView = findViewById(R.id.imageView);
-                imageView.setImageBitmap(outputBitmap);
             }
+
+            //rescaling the image for better input
+            Bitmap bitmapScaled = Bitmap.createScaledBitmap(imageBitmap, width, height, true);
+
+            Bitmap outputBitmap = bitmapScaled.copy(bitmapScaled.getConfig(), true);
+            outputBitmap.setPixels(intValues, 0, outputBitmap.getWidth(), 0, 0, outputBitmap.getWidth(), outputBitmap.getHeight());
+            //sets the segmented image to the imageview
+            ImageView imageView = findViewById(R.id.imageView);
+            imageView.setImageBitmap(outputBitmap);
         });
 
     }
@@ -186,8 +185,9 @@ public class MainActivity extends AppCompatActivity {
         } catch (IOException e) {
             e.printStackTrace();
         }
-    }
-    //getting the path for the model
+    }//end of onActivity
+
+                //getting the path for the model
     public static String readingFilePath(Context context, String assetName) throws IOException {
         File file = new File(context.getFilesDir(), assetName);
             if (file.exists() && file.length() > 0) {

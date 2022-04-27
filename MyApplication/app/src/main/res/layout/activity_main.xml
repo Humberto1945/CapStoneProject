@@ -10,7 +10,7 @@
         android:id="@+id/imageView"
         android:layout_width="374dp"
         android:layout_height="218dp"
-        android:layout_marginTop="121dp"
+        android:layout_marginTop="32dp"
         android:layout_marginBottom="610dp"
         android:contentDescription="@string/imageview"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -47,6 +47,21 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/loadButton"
+        app:layout_constraintTop_toBottomOf="@+id/imageView" />
+
+    <ProgressBar
+        android:id="@+id/progressBar"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="172dp"
+        android:layout_marginTop="154dp"
+        android:layout_marginEnd="191dp"
+        android:layout_marginBottom="338dp"
+        android:visibility="invisible"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/imageView" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
