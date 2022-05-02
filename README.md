@@ -1,5 +1,5 @@
 # Overview
-This will serve as our group repository for our senior sem class. We will train our a model and use it in an android application that loads an image and segments the image.
+This will serve as our group repository for our senior sem class. We will train our model and use it in an android application that loads an image and segments the image.
 # Cloning the repo
 `git clone https://github.com/Humberto1945/CapStoneProject.git`
 # Application Start
