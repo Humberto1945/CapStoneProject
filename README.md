@@ -9,11 +9,12 @@ This will serve as our group repository for our senior sem class. We will train 
 4. Verify you have python downloaded by typing python and it should return "Python 3.10.2" or whatever version of python you have.
 5. Open up the model_loading.py and change `FILE =` to the directory that you put your model in.
 6. On line 15 you can change the name of the file. Example change /model3 to /model4. Keep the rest of the directory the same.`CapStoneProject/MyApplication/app/src/main/assets/model3.pth`
-7. Navigate in the terminal to CapStoneProject\MyApplication\app\src\main and run the command `python model_loading.py`
-8. Verify the model outputed in the `assests folder`
-9. Also change the asset name to what you named it above `preTrainedModel= Module.load(readingFilePath(this,"model3.pth"));`
-10. If you are running on a virtual device make sure you have the `Pixel 5 API 30` as your virtual device. 
-11. If you are running on a physical device make sure you have developer mode on and plug in your phone to the pc.
+7. Next add an assests directory to the main folder allowing the outputted model to be placed there.
+8. Navigate in the terminal to CapStoneProject\MyApplication\app\src\main and run the command `python model_loading.py`
+9. Verify the model outputed in the `assests folder`
+10. Also change the asset name to what you named it above `preTrainedModel= Module.load(readingFilePath(this,"model3.pth"));`
+11. If you are running on a virtual device make sure you have the `Pixel 5 API 30` as your virtual device. 
+12. If you are running on a physical device make sure you have developer mode on and plug in your phone to the pc.
 
 # Running the application
 Select the green trangle button to run the application
