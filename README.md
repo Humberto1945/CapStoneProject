@@ -8,7 +8,7 @@ This will serve as our group repository for our senior sem class. We will train 
 3. Put the model in CapStoneProject\MyApplication\app\src\main
 4. Verify you have python downloaded by typing python and it should return "Python 3.10.2" or whatever version of python you have.
 5. Open up the model_loading.py and change `FILE =` to the directory that you put your model in.
-6. On line 15 in that file you can change the dirctory that `CapStoneProject/MyApplication/app/src/main/assets/model3.pth`
+6. On line 15 you can change the name of the file. Example change /model3 to /model4. Keep the rest of the directory the same.`CapStoneProject/MyApplication/app/src/main/assets/model3.pth`
 7. Navigate in the terminal to CapStoneProject\MyApplication\app\src\main and run the command `python model_loading.py`
 8. Verify the model outputed in the `assests folder`
 9. Also change the asset name to what you named it above `preTrainedModel= Module.load(readingFilePath(this,"model3.pth"));`
