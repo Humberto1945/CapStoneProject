@@ -1,9 +1,5 @@
 package com.example.seniorsem;
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
-
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -30,10 +26,6 @@ public class MainActivity extends AppCompatActivity {
     Uri selectedImage;
     Bitmap imageBitmap;
     Module preTrainedModel;
-    // Module moduleResNet;
-    // int imageSize = 224;
-    // class segmentation corresponding indices
-    // int background = 0;
     int unlabelled = 225;
     int aeroplane = 1;
     int bicycle = 2;
@@ -67,39 +59,33 @@ public class MainActivity extends AppCompatActivity {
         Button segmentImage = findViewById(R.id.segmentButton);
         // Import the pretrained-model
         try {
-            preTrainedModel= Module.load(readingFilePath(this,"model3.pth"));
+            preTrainedModel= Module.load(readingFilePath(this,"model9.pth"));
 
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-        // preTrainedModel= LiteModuleLoader.load("C:/Users/titig/AprilPush/CapStoneProject/MyApplication/app/src/main/assets/test_model.ptl");
-
         // Lets the user select an image from their camera roll
         loadImage.setOnClickListener(view -> {
-            // Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
             Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
             startActivityForResult(intent, 50);
 
         });
         // Action of clicking the segment button
         segmentImage.setOnClickListener(view -> {
-            //getting the inputs from the image
+            // getting the inputs from the image
             final Tensor inputTensor = TensorImageUtils.bitmapToFloat32Tensor(imageBitmap,
                     TensorImageUtils.TORCHVISION_NORM_MEAN_RGB, TensorImageUtils.TORCHVISION_NORM_STD_RGB);
-            // final float[] inputs = inputTensor.getDataAsFloatArray();
-            //setting the values to a map to get the class num
+            // setting the values to a map to get the class num
             Map<String, IValue> outTensors = preTrainedModel.forward(IValue.from(inputTensor)).toDictStringKey();
             // VOC key word out to tensor
-            //final Tensor outputTensor = outTensors.get("out").toTensor();
             final Tensor outputTensor = Objects.requireNonNull(outTensors.get("out")).toTensor();
             final float[] scores = outputTensor.getDataAsFloatArray();
-
+            // getting the sizes of the image
             int width = imageBitmap.getWidth();
             int height = imageBitmap.getHeight();
-
+            // find the initial values
             int[] intValues = new int[width * height];
-            //looping through to get the class
+            // looping through to get the class that the model thinks the image is
             for (int j = 0; j < height; j++) {
                 for (int k = 0; k < width; k++) {
                     int maxi = 0, maxj = 0, maxk = 0;
@@ -112,6 +98,8 @@ public class MainActivity extends AppCompatActivity {
                             maxi = i; maxj = j; maxk = k;
                         }
                     }
+                    // receiving the output class number and assigning to the specified class
+                    // also setting the rgb of the class object
                     if (maxi == aeroplane)
                         intValues[maxj * width + maxk] = Color.rgb(128,0,0);
                     else if (maxi == bicycle)
@@ -159,12 +147,12 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
 
-            //rescaling the image for better input
+            // rescaling the image for better input
             Bitmap bitmapScaled = Bitmap.createScaledBitmap(imageBitmap, width, height, true);
-
+            // putting a copy of the bitmap inside an outputted variable
             Bitmap outputBitmap = bitmapScaled.copy(bitmapScaled.getConfig(), true);
             outputBitmap.setPixels(intValues, 0, outputBitmap.getWidth(), 0, 0, outputBitmap.getWidth(), outputBitmap.getHeight());
-            //sets the segmented image to the imageview
+            // sets the segmented image to the imageview
             ImageView imageView = findViewById(R.id.imageView);
             imageView.setImageBitmap(outputBitmap);
         });
@@ -173,21 +161,22 @@ public class MainActivity extends AppCompatActivity {
 
     protected void onActivityResult(int requestCode, int resultCode, Intent data){
         super.onActivityResult(requestCode, resultCode, data);
-        //ImageView imageView = findViewById(R.id.imageView);
+        // checks to see if an image is actually selected
+        // and if so sets the image in the image view
         if (resultCode == RESULT_OK && data != null) {
             selectedImage = data.getData();
             ImageView imageView = findViewById(R.id.imageView);
             imageView.setImageURI(selectedImage);
         }
         try {
-            //Getting the bitmap image
+            // getting the bitmap image
             imageBitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(),selectedImage);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }//end of onActivity
 
-                //getting the path for the model
+    // helper method to get the location of the model
     public static String readingFilePath(Context context, String assetName) throws IOException {
         File file = new File(context.getFilesDir(), assetName);
             if (file.exists() && file.length() > 0) {
