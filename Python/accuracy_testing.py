@@ -15,6 +15,13 @@ import torch.cuda
 import tensorflow as tf
 import time
 
+"""
+
+Tests the accuracy of input model by looping through the testing set and computing the IoU accuracy for each class using Jaccard Index
+Args: none (although you can manually change the set used as the test set and the model being tested)
+Returns: none (prints values of IoU accuracy for each class and overall accuracy for the model)
+
+"""
 
 
 #data preparation
