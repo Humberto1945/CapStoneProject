@@ -3,6 +3,14 @@ import random
 import numpy as np                                                                                                   
 import os
 
+"""
+
+*INSERT WHAT IT DOES HERE*
+Args:
+Returns:
+
+"""
+
 dic_path = 'PascalVOC2012/VOC2012/ImageSets/Main'
 
 obj_classes = ['background', 'aeroplane', 'bicycle', 'bird',
