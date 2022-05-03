@@ -16,7 +16,11 @@ std2 = 0.
 pixCount = 0
 
 """ 
-    Calculation of data normalization values based on the training set
+    Calculation of data normalization values (mean and standard deviation) based on the training set per channel (RGB)
+    Loops through the training set to sum up the values needed and assumes a square image
+    Args: none
+    Returns: none (prints values)
+    
 """
 
 folder_path = '/content/drive/MyDrive/Python/PascalVOC2012/VOC2012/JPEGImages/'
