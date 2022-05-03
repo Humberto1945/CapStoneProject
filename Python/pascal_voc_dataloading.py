@@ -7,6 +7,13 @@ import os
 import cv2
 import matplotlib.pyplot as plt
 
+"""
+
+Creates datesets to be used in other codes. Is already included in the necessary areas due to oddities with Google Colab.
+Args: none (batch size, image size, and datasets can be manually changed)
+Returns: none (train_loader, test_loader)
+
+"""
 
 #data preparation
 
