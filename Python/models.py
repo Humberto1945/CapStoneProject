@@ -19,6 +19,24 @@ import sys
 import copy
 import random
 
+"""
+
+The models.py file contains the dataloading and model training sections of the project. 
+The file uses the PascalVOC dataset images to train with. 
+It is designed so that the files can be used inside Google Colab. 
+The shared drive must be dragged and dropped into "My Drive" so that the files cn be accessed when mounting the drive onto Google Colab. 
+Then, the cell where models.py is located can be edited to specify a name to save the model under. 
+This model will be saved directly into the drive under the models/ subdirectory. 
+This is the location where the other models which were trained during the project were saved. 
+Before training, change the name of the directory where the loss and accuracy logs for tensorboard will be stored, 
+so as to not save two logs under the same directory.
+
+Args: none (datasets and model can be changed manually)
+
+Returns: various log files and a trained model
+
+"""
+
 #writes to logs folder to plot graph in tensorboard
 loss_writer = SummaryWriter("/content/drive/MyDrive/Python/logs_deeplab/ver_1_1_loss")
 acc_writer = SummaryWriter("/content/drive/MyDrive/Python/logs_deeplab/ver_1_1_acc")
