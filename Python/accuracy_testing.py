@@ -112,12 +112,14 @@ test_loader = getDatasets()
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 FILE = "/content/drive/MyDrive/Python/models/resnet50deeplab_ver_1_1.pth"
-resnet50fcn = models.segmentation.deeplabv3_resnet50(num_classes=len(obj_classes)-1).to(device)
-resnet50fcn.load_state_dict(torch.load(FILE))
-resnet50fcn.eval().to(device)
+resnet50fcn = models.segmentation.fcn_resnet50(num_classes=len(obj_classes)-1).to(device)
+resnet50deeplab =  models.segmentation.deeplabv3_resnet50(num_classes=len(obj_classes)-1).to(device)
+
 
 #model testing using samples/test_set.txt and labels/test_set.txt
 def test_accuracy(model):
+  model.load_state_dict(torch.load(FILE))
+  model.eval().to(device)
     print("Testing accuracy of model...")
     with torch.no_grad():
         IoUs = []
