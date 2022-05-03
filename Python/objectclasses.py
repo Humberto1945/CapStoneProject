@@ -10,6 +10,14 @@ from PIL import Image
 from skimage.io import imshow
 import os
 
+"""
+
+Used to see the RGB values of each class in the PascalVOC dataset
+Args: none
+Returns: none (prints the rbg values per class)
+
+"""
+
 obj_classes = ['background', 'aeroplane', 'bicycle', 'bird',
                 'boat', 'bottle', 'bus', 'car', 'cat', 'chair',
                 'cow', 'diningtable', 'dog', 'horse', 'motorbike',
