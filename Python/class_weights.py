@@ -6,6 +6,15 @@ from PIL import Image
 import os
 import torch
 
+"""
+
+Computes the class weights for the provided training set by looping through the image labels and counting the pixels of each class occurance
+then converts it to a tensor
+Args: none (dataset and class list can be manually changed)
+Returns: none (prints out tensor/array of class weights)
+
+"""
+
 #using Pascal VOC Dataset to get filenames and labels
 obj_classes = ['background', 'aeroplane', 'bicycle', 'bird',
                 'boat', 'bottle', 'bus', 'car', 'cat', 'chair',
