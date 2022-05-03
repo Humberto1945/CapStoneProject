@@ -55,7 +55,23 @@ or
 `test_accuracy(resnet50deeplab)`
 
 # Normalization
+The file `MeanSDCalc.py` calculates the mean and standard deiation of the dataset per channel and these values are used in the transforms to normalize the pixel values. It uses the PascalVOC dataset in the drive to calculate these values. This file can be run to retrieve the values that are used in the training and testing loop in the following section:
 
+`train_transform = transforms.Compose([`
+
+  `   transforms.ToPILImage(),`
+  
+  `   transforms.CenterCrop(image_size),`
+  
+  `   transforms.ToTensor(),`
+  
+  `transforms.Normalize([0.457, 0.443, 0.407], [0.273, 0.269, 0.285])`
+  
+`])`
+
+
+# Creating Datasets
+The file `createDatasets.py` can be run to create text files which hold the image file names for test, training, and validation sets in text files. These text files are used in the dataloading sections of the training and testing loops to load the data into the model.
 
 # Helpful Notes When cloning repository
 When you git clone our project and open it with android studio make sure you open on the level "MyApplication" to make sure it builds correctly.
