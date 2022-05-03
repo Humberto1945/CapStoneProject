@@ -5,9 +5,10 @@ import os
 
 """
 
-*INSERT WHAT IT DOES HERE*
-Args:
-Returns:
+The file createDatasets.py can be run to create text files which hold the image file names for test, training, and validation sets in text files.
+These text files are used in the dataloading sections of the training and testing loops to load the data into the model.
+Args: none
+Returns: creates 3 files (train_set.txt, test_set.txt, validation_set.txt)
 
 """
 
