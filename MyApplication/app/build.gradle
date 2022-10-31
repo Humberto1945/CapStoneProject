@@ -28,6 +28,7 @@ android {
     packagingOptions {
         resources.excludes.add("META-INF/*")
     }
+    namespace 'com.example.seniorsem'
 }
 
 dependencies {
@@ -35,9 +36,16 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.4.1'
     implementation 'com.google.android.material:material:1.5.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.3'
+//    implementation 'org.pytorch:pytorch_android_lite:1.12.1'
+    implementation 'org.pytorch:pytorch_android_torchvision:1.12.1'
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.3'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
+<<<<<<< Updated upstream
     implementation 'org.pytorch:pytorch_android_lite:1.9.0'
     implementation 'org.pytorch:pytorch_android_torchvision:1.9.0'
+=======
+    implementation 'org.pytorch:pytorch_android:1.12.1'
+
+>>>>>>> Stashed changes
 }

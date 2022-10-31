@@ -1,0 +1,161 @@
+from torchvision.transforms.transforms import CenterCrop
+from torchmetrics import JaccardIndex
+import torch
+from torchvision import transforms
+from torch.utils.data import Dataset, DataLoader
+import numpy as np                                                                                                   
+from PIL import Image
+import os
+import cv2
+import matplotlib.pyplot as plt
+import torch
+import torch.nn as nn
+from torchvision import datasets, models
+import torch.cuda
+import tensorflow as tf
+import time
+import PascalVOC
+import transforms
+import data_loading
+import model_training
+
+"""
+
+Tests the accuracy of input model by looping through the testing set and computing the IoU accuracy for each class using Jaccard Index
+Args: none (although you can manually change the set used as the test set and the model being tested)
+Returns: none (prints values of IoU accuracy for each class and overall accuracy for the model)
+
+"""
+
+
+#data preparation
+
+obj_classes = ['background', 'aeroplane', 'bicycle', 'bird',
+                'boat', 'bottle', 'bus', 'car', 'cat', 'chair',
+                'cow', 'diningtable', 'dog', 'horse', 'motorbike',
+                'person', 'pottedplant', 'sheep', 'sofa', 'train',
+                'tvmonitor', 'void/unlabelled']
+
+test_set_labels = []
+test_set_samples = []
+
+data_loading.loadDatasets('/content/drive/MyDrive/Python/labels/test_set.txt', test_set_labels)
+data_loading.loadDatasets('/content/drive/MyDrive/Python/samples/test_set.txt', test_set_samples)
+
+batch_size = 10
+image_size = 512
+
+#dataset
+test_dataset = PascalVOC.PascalVOCDataset(test_set_samples, test_set_labels, transforms.test_transform, transforms.target_transform)
+    
+#dataloader
+test_loader = DataLoader(dataset=test_dataset, batch_size=batch_size, shuffle=False)
+    
+
+FILE = "/content/drive/MyDrive/Python/models/resnet50deeplab_ver_1_1.pth"
+LOCAL_FILE = "resnet50deeplab_ver_1_1.pth"
+# resnet50fcn = models.segmentation.fcn_resnet50(weights=None, progress=True, num_classes=21).to(model_training.device)
+resnet50deeplab =  models.segmentation.deeplabv3_resnet50(weights=None, progress=True, num_classes=21).to(model_training.device)
+
+
+def num_correct_pixels(model):
+    model.load_state_dict(torch.load(LOCAL_FILE))
+    model.eval().to(model_training.device)
+    with torch.no_grad():
+        for samples, labels in test_loader:
+            samples = samples.to(model_training.device)
+            labels = labels.to(model_training.device)
+            samples = samples.type(torch.cuda.FloatTensor)
+            labels = labels.type(torch.cuda.LongTensor)
+
+            outputs = model(samples)['out']
+
+            predictions = torch.argmax(outputs, 1)
+
+            result = (predictions == labels)
+
+            accuracy = torch.sum(result) / torch.numel(predictions)
+            print(accuracy)
+
+
+
+    
+
+
+#model testing using samples/test_set.txt and labels/test_set.txt
+def test_accuracy(model):
+    model.load_state_dict(torch.load(FILE))
+    model.eval().to(model_training.device)
+    print("Testing accuracy of model...")
+    with torch.no_grad():
+        IoUs = []
+        IoU_network_mean = 0
+        num_correct = 0
+        num_samples = 0
+        n_class_correct = [0 for i in range(len(obj_classes))]
+        n_class_samples = [0 for i in range(len(obj_classes))]
+
+        for samples, labels in test_loader:
+            samples = samples.to(model_training.device)
+            labels = labels.to(model_training.device)
+            samples = samples.type(torch.cuda.FloatTensor)
+            labels = labels.type(torch.cuda.LongTensor)
+
+            outputs = model(samples)['out']
+
+            predictions = torch.argmax(outputs, 1)
+           
+
+            jaccard = JaccardIndex(num_classes=22, ignore_index=21, reduction='none').to(model_training.device)
+            IoU = jaccard(predictions, labels).cpu()
+            IoUs.append(np.array(IoU))
+            # print(IoU)
+     
+
+        #   accuracy using number of correct pixels
+        # #     for i in range(5):
+        # #         for j in range(image_size-1):
+        # #             for k in range(image_size-1):
+        # #                 label = labels[i][j][k].item()
+        # #                 # print(label)
+        # #                 pred = predictions[i][j][k].item()
+        # #                 print(int(label))
+        # #                 n_class_samples[int(label)] += 1
+        # #                 if (label == pred):
+        # #                     n_class_correct[int(label)] += 1
+        # #                     # print(n_class_correct[int(label)])
+                        
+
+        # for i in range(21):
+        #     print(n_class_correct[i])
+        #     acc = 100.0 * (n_class_correct[i] / n_class_samples[i])
+        #     print(f'Accuracy of {obj_classes[i]}: {acc:.4f}%')
+        #     num_correct += n_class_correct[i]
+        #     num_samples += n_class_samples[i]
+
+        # acc = 100.0 * num_correct / num_samples
+        # print(f'accuracy of network = {acc:.4f}')
+
+
+        # accuracy using IoU
+        IoU_class_mean = [0 for i in range(len(obj_classes))]
+        IoUs = np.array(IoUs)
+       
+
+        for i in range(len(IoUs)):
+            for j in range(len(obj_classes)-1):
+                IoU_class_mean[j] += IoUs[i][j]
+
+        for i in range(len(obj_classes)-1):
+            IoU_class_mean[i] /= len(IoUs)
+            IoU_network_mean += IoU_class_mean[i]
+
+        IoU_network_mean /= (len(obj_classes)-1)
+
+        print("IoU of model by classes: ")
+        for i in range(len(obj_classes)-1):
+            print(f'Accuracy of {obj_classes[i]}: {IoU_class_mean[i]*100:.4f} %')
+        
+        print(f'IoU of Model: {IoU_network_mean*100:.4f} %')
+
+# test_accuracy(resnet50fcn)
